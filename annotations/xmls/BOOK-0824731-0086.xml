@@ -1,0 +1,26 @@
+<annotation>
+	<folder>images-raw</folder>
+	<filename>BOOK-0824731-0086.jpg</filename>
+	<path>C:\Users\vanny 2\Desktop\BOOK-ZID0824731\images-raw\BOOK-0824731-0086.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>6271</width>
+		<height>4333</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>human</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>2131</xmin>
+			<ymin>1703</ymin>
+			<xmax>2698</xmax>
+			<ymax>2216</ymax>
+		</bndbox>
+	</object>
+</annotation>
