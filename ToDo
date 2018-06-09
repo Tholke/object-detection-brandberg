@@ -1,5 +1,4 @@
 # ToDo
 
-Wechsel von Tensorflow Object-Detection API zu eigenem Neuronalen Netz:
-1. Einlesen der Pascal VOC Dateien mit Pandas (alternativ Einlesen der TF-Record Dateien)
-2. Schreiben eines eigenen Neuronalen Netzes mit Tensorflow oder Keras
+Wechsel von Tensorflow Object-Detection API zu eigenem Neuronalen Netz
+1. Schreiben eines eigenen Neuronalen Netzes mit Tensorflow oder Keras
