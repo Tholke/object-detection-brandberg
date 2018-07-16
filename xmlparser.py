@@ -11,7 +11,7 @@ def getData():
     #Eine Hauptliste für alle XML Dateien
     data = []
 
-    for file in glob.glob('annotations/xmls/*.xml'):
+    for file in glob.glob('BOOK-ZID0824731/images-processed/*.xml'):
         #XML Datei wird geparsed
         tree = ET.parse(file)
         root = tree.getroot()

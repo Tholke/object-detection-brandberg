@@ -7,13 +7,13 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 def read_decode(filename_queue):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
-    feature = {'train/label': tf.FixedLenFeature([], tf.int64),
-               'train/image': tf.FixedLenFeature([], tf.string)}
+    feature = {'label': tf.FixedLenFeature([], tf.int64),
+               'image': tf.FixedLenFeature([], tf.string)}
     
     features = tf.parse_single_example(serialized_example, features = feature)
-    image = tf.decode_raw(features['train/image'], tf.uint8)
+    image = tf.decode_raw(features['image'], tf.uint8)
     image = tf.cast(image, tf.float32)
-    label = tf.cast(features['train/label'], tf.int32)
+    label = tf.cast(features['label'], tf.int32)
   
     return image, label
 
@@ -40,7 +40,7 @@ def read_tfrecords(path):
 #                cv2.destroyAllWindows()
                 features.append(img)
                 labels.append(l)
-                index += 1
+#                index += 1
                     
         except tf.errors.OutOfRangeError:
             coord.request_stop()
@@ -69,9 +69,10 @@ def cnn_model(features, labels, mode):
     
     logits = tf.layers.dense(inputs = dropout, units = 2)
     
-    onehot_labels = tf.one_hot(indices = labels, depth = 2)
+    if labels is not None:
+        onehot_labels = tf.one_hot(indices = labels, depth = 2)
     
-    loss = tf.losses.softmax_cross_entropy(onehot_labels=onehot_labels, logits=logits)
+        loss = tf.losses.softmax_cross_entropy(onehot_labels=onehot_labels, logits=logits)
     
     predictions = {
       # Generate predictions (for PREDICT and EVAL mode)
@@ -81,9 +82,10 @@ def cnn_model(features, labels, mode):
       "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
     }
     if mode == tf.estimator.ModeKeys.PREDICT:
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions, export_outputs={
+            'classify': tf.estimator.export.PredictOutput(predictions)})
 
-
+ 
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.00001)
         train_op = optimizer.minimize(
@@ -99,18 +101,24 @@ def cnn_model(features, labels, mode):
 
 
 def main(unused_argv):
-    path = 'train.tfrecords'
-    features, labels = read_tfrecords(path)
+    train_path = 'train.tfrecords'
+    features, labels = read_tfrecords(train_path)
 
     features = np.asarray(features)
     labels = np.asarray(labels)
+    
+    eval_path = 'eval.tfrecords'
+    eval_features, eval_labels = read_tfrecords(eval_path)
+
+    eval_features = np.asarray(eval_features)
+    eval_labels = np.asarray(eval_labels)
 
     classifier = tf.estimator.Estimator(
         model_fn=cnn_model, model_dir="/Users/thomas/Desktop/Uni/SoSe18/KI/tmp/brandberg_cnn")
     
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensors_to_log, every_n_iter=1)
+        tensors=tensors_to_log, every_n_iter=50)
     
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
       x={"x": features},
@@ -124,14 +132,13 @@ def main(unused_argv):
       hooks=[logging_hook])
     
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={"x": features},
-      y=labels,
+      x={"x": eval_features},
+      y=eval_labels,
       num_epochs=1,
       shuffle=False)
     
     eval_results = classifier.evaluate(input_fn=eval_input_fn)
     print(eval_results)
-
     
 if __name__ == "__main__":
     tf.app.run()
