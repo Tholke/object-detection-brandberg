@@ -65,11 +65,8 @@ def main(unused_argv):
                     continue
                 
                 index = index + 1
-                # THIS IS WHERE YOU WOULD PROCESS YOUR WINDOW, SUCH AS APPLYING A
-                # MACHINE LEARNING CLASSIFIER TO CLASSIFY THE CONTENTS OF THE
-                # WINDOW
-        
-                # since we do not have a classifier, we'll just draw the window
+
+   
                 clone = resized.copy()
                 clone2 = resized.copy()
                 cv2.rectangle(clone2, (x, y), (x + winW, y + winH), (0, 255, 0), 2)
@@ -95,9 +92,6 @@ def main(unused_argv):
             
                 predictions = classifier.predict(input_fn = input_fn)
                 list_pred = list(predictions)
-        
-                for img in reversed(list_pred):
-                    probs = img.get('probabilities')
                 
         #         captch_ex('out.png')
                 ind = len(list_pred)-1
@@ -114,27 +108,7 @@ def main(unused_argv):
                 cv2.waitKey(1)
                 time.sleep(0.025)
     
-#         images.append(img)
-#         images = np.asarray(images)
-#     
-#         classifier = tf.estimator.Estimator(
-#             model_fn=cnn_model, model_dir="output/brandberg_cnn/")
-#        
-#         pred_input_fn = tf.estimator.inputs.numpy_input_fn(images, shuffle=False)
-# 
-#         classifier = tf.estimator.Estimator(
-#             model_fn=cnn_model, model_dir="output/brandberg_cnn/")
-#     
-#         input_fn = tf.estimator.inputs.numpy_input_fn(
-#             x={"x": images},
-#             num_epochs=1,
-#             shuffle=False)
-#     
-#         predictions = classifier.predict(input_fn = input_fn)
-#         list_pred = list(predictions)
-# 
-#         for img in reversed(list_pred):
-#             probs = img.get('probabilities')
+
         print(imageList)        
 
 if __name__ == "__main__":
