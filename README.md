@@ -1,3 +1,8 @@
 # Objekterkennung in der Datenbank vom oberen Omukuruvaro.
+Objektsegmentierung von Wandmalereien des oberen Brandbergs durch TensorFlow und OpenCV
 
-Hierzu soll ein neuronales Netzwerk helfen, einzelne Objekte zu erkennen, die anschließend mit OpenCV isoliert und gespeichert werden.
+<h3>Mitglieder:</h3>
+Tarek Khellaf: xxx<br>
+Anita Wichert: xxx<br>
+Marvin Busch: xxx<br>
+Thomas Oehlke: toehlke@smail.uni-koeln.de<br>
