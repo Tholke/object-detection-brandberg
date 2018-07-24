@@ -1,10 +1,10 @@
-# Objekterkennung in der Datenbank vom oberen Omukuruvaro.
+﻿# Objekterkennung in der Datenbank vom oberen Omukuruvaro.
 Objektsegmentierung von Wandmalereien des oberen Brandbergs durch TensorFlow und OpenCV
 
 <h3>Mitglieder:</h3>
 Tarek Khellaf: xxx<br>
 Anita Wichert: xxx<br>
-Marvin Busch: xxx<br>
+Marvin Busch: mbusch10@smail.uni-loeln.de<br>
 Thomas Oehlke: toehlke@smail.uni-koeln.de<br>
 
 Seiten eines Buches über die Wandmalereien im oberen Brandberg (Namibia) werden durch einen selective search-Algorithmus in verschiedene Regionen unterteilt. Einige dieser Regionen werden anschließend in ein neuronales Netzwerk eingespeist. Wenn dieses Netzwerk erkennt, dass eine Region eine Mensch- oder Tiermalerei ist, wird diese Malerei schließlich durch einen Watershed-Algorithmus segmentiert und umrandet. Diese Umrandung kann anschließend abgespeichert werden.
