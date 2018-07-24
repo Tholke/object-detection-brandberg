@@ -5,7 +5,7 @@ import tensorflow as tf
 import os
 import cv2
 
-#Unterdrückt eine Fehlermeldung bei MacOS
+#Unterdrückt eine Warnmeldung bei MacOS
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 #Funktion, die eine Bild-Label-Kombination lädt
@@ -122,20 +122,20 @@ def cnn_model(features, labels, mode):
 
 def main(unused_argv):
     #Trainingsdaten werden eingelesen und in NumPy-Arrays umgewandelt
-    train_path = 'train.tfrecords'
+    train_path = 'data/train.tfrecords'
     features, labels = read_tfrecords(train_path)
     features = np.asarray(features)
     labels = np.asarray(labels)
     
     #Evaluierungsdaten werden eingelesen und in NumPy-Arrays umgewandelt
-    eval_path = 'eval.tfrecords'
+    eval_path = 'data/eval.tfrecords'
     eval_features, eval_labels = read_tfrecords(eval_path)
     eval_features = np.asarray(eval_features)
     eval_labels = np.asarray(eval_labels)
 
     #Das neuronale Netzwerk wird geladen
     classifier = tf.estimator.Estimator(
-        model_fn=cnn_model, model_dir="/Users/thomas/Desktop/Uni/SoSe18/KI/tmp/brandberg_cnn")
+        model_fn=cnn_model, model_dir="tmp/brandberg_cnn")
 
     #Zu speichernde Daten
     tensors_to_log = {"probabilities": "softmax_tensor"}

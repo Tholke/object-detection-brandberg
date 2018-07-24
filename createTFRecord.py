@@ -65,16 +65,16 @@ def preprocess():
             pageName = False
      
     #Datei mit Bildern für True-Negatives wird geladen
-    fname = 'truenegatives.txt'   
+    fname = 'data/truenegatives.txt'   
     with open(fname) as f:
         content = f.readlines()
     content = [x.strip() for x in content]    
     
     tn_no = 0
     for line in content:
-        print("BOOK-ZID0824731/images-raw/{}".format(line))
+        print("Erstelle True-Negatives aus: data/images/{}".format(line))
         #Bild wird gelesen
-        img = cv2.imread("BOOK-ZID0824731/images-raw/{}".format(line))
+        img = cv2.imread("data/images/{}".format(line))
         height, width, _ = img.shape
                
         x = []
@@ -99,7 +99,6 @@ def preprocess():
             
             #Jedes Trainingsdatum wird in eine Liste aller Trainingsdaten gespeichert
             xs.append(x)
-            print("Adding true negative no. " + (str(tn_no)))
             tn_no = tn_no + 1        
   
           
@@ -109,7 +108,7 @@ def preprocess():
 #Funktion, die die Trainingsdaten und Labels in eine TFRecordsdatei umwandelt und True-Negatives erstellt
 def writeTFRecords(xs, ys, filename):
     #Der Pfad des Ordners, in dem alle Bilder gespeichert sind
-    folder = 'BOOK-ZID0824731/images-raw/'
+    folder = 'data/images/'
     
     #TFWriter wird erstellt
     writer = tf.python_io.TFRecordWriter(filename)
@@ -147,8 +146,8 @@ def writeTFRecords(xs, ys, filename):
 #Hauptfunktion
 def process():
     #Der Pfad, wo die TFRecordsdatei für die Trainings- und Evaluierungsdaten abgespeichert werden sollen
-    train_filename = 'train.tfrecords'
-    eval_filename = 'eval.tfrecords'
+    train_filename = 'data/train.tfrecords'
+    eval_filename = 'data/eval.tfrecords'
     
     prosessed_data = preprocess()
     xs = prosessed_data['xs']

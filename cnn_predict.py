@@ -5,8 +5,9 @@ import numpy as np
 import cv2
 import os
 import watershed
+from intersectionOverUnion import intersectionOverUnion
 
-#Unterdrückt eine Fehlermeldung bei MacOS
+#Unterdrückt eine Warnmeldung bei MacOS
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 #Das ganze Model muss neu angegeben werden. Auch wenn es schon vorher trainiert wurde
@@ -50,8 +51,7 @@ def cnn_model(features, labels, mode):
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions, export_outputs={
             'classify': tf.estimator.export.PredictOutput(predictions)})
-
-        
+    
 def main(unused_argv):
     #Das trainierte Model wird geladen
     saver = tf.train.import_meta_graph('tmp/brandberg_cnn/model.ckpt-2056.meta')
@@ -63,7 +63,7 @@ def main(unused_argv):
         sess.run(init_op)
         
     #Ein Bild (eine Buchseite) wird eingelesen
-    dirPath = '/Users/thomas/Desktop/Uni/SoSe18/KI/BOOK-ZID0824731/images-raw/'
+    dirPath = 'data/images/'
     imagePath = 'BOOK-0824731-0058.jpg'
     img = cv2.imread(dirPath + imagePath)
     
@@ -98,14 +98,20 @@ def main(unused_argv):
 
     imagesToClassify = []
     imagesForSegmentation = []
+    scaledBoundingBoxes = []
     hscale = img.shape[0] / resizedImg.shape[0]
     wscale = img.shape[1] / resizedImg.shape[1]
     
     #Übrige Regionen werden aus der Buchseite ausgeschnitten und in einen Array gespeichert
     for i, rect in enumerate(rects):
         x, y, w, h = rect
-        #Regionen werden skaliert und aus dem Originalbild ausgeschnitten (nicht aus dem 600x600 Pixel Bild)
-        rectImg = img[int(y*hscale):int((y+h)*hscale), int(x*wscale):int((x+w)*wscale)]
+        #Regionen werden skaliert
+        scaledXmin, scaledYmin, scaledXmax, scaledYmax = int(x*wscale), int(y*hscale), int((x+w)*wscale), int((y+h)*hscale)
+        #Skalierte BoundingBox wird für spätere Rechnungen in einem Array abgespeichert 
+        scaledBoundingBox = [scaledXmin, scaledYmin, scaledXmax, scaledYmax]
+        scaledBoundingBoxes.append(scaledBoundingBox)
+        #Skalierte Regionen werden aus dem Originalbild ausgeschnitten (nicht aus dem 600x600 Pixel Bild)
+        rectImg = img[scaledYmin:scaledYmax, scaledXmin:scaledXmax]
         #Regionen werden in einen Array gespeichert mit dem später die Segmentation durchgeführt wird
         imagesForSegmentation.append(rectImg)
         #Region wird für das neuronale Netzwerk vorbereitet und in einen anderen Array gespeichert
@@ -119,7 +125,7 @@ def main(unused_argv):
 
     #Das neuronale Netzwerk wird geladen
     classifier = tf.estimator.Estimator(
-        model_fn=cnn_model, model_dir="/Users/thomas/Desktop/Uni/SoSe18/KI/tmp/brandberg_cnn")
+        model_fn=cnn_model, model_dir="tmp/brandberg_cnn")
 
     #Regionen werden dem Netzwerk übergeben und es gibt Predictions aus
     input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -135,16 +141,45 @@ def main(unused_argv):
     #D.h. alle Regionen, bei denen das Netzwerk kein Mensch oder Tier erkannt hat 
     ind = len(list_pred)-1
     deletedImages = 0
+    predictionsForSegmentation = []
     for img in reversed(list_pred):
         probs = img.get('probabilities')
         if probs[0] < 0.95 and probs[1] < 0.95:
             imagesForSegmentation.pop(ind)
+            scaledBoundingBoxes.pop(ind)
             deletedImages += 1
+        else:
+            predictionsForSegmentation.append(max(probs[0], probs[1]))
         ind -= 1
+    
+    i = 0
+    arraylen = len(scaledBoundingBoxes)
+    
+    while i < arraylen:
+        j = i+1
+        while j < arraylen:
+            if intersectionOverUnion(scaledBoundingBoxes[i], scaledBoundingBoxes[j]):
+                probsImgA = predictionsForSegmentation[i]
+                probsImgB = predictionsForSegmentation[j]
+      
+                if probsImgB <= probsImgA:
+                    imagesForSegmentation.pop(j)
+                    scaledBoundingBoxes.pop(j)
+                    j -= 1
+                    arraylen -= 1
+                else:
+                    imagesForSegmentation.pop(i)
+                    scaledBoundingBoxes.pop(i)
+                    i -= 1
+                    arraylen -= 1
+                    break
+            j += 1
+        i += 1
+            
     print(len(imagesForSegmentation), 'Bilder werden segmentiert.')
     
     #Pfad unter dem die Segmentierten bilder abgespeichert werden können
-    savePath = '/Users/thomas/Desktop/Uni/SoSe18/KI/BOOK-ZID0824731/images-saved/'
+    savePath = 'output/'
     
     #Restliche Regionen aus dem zu segmentierenden Array werden durch den Watershed-Algorithmus segmentiert
     for i, image in enumerate(imagesForSegmentation):
