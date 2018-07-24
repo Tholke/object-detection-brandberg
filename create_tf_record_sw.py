@@ -22,6 +22,22 @@ def loadImage(path, obj):
     #Eine gesamte Buchseite wird gelesen
     img = cv2.imread(path)
     print(path)
+    w = int(obj[3]) - int(obj[1])
+    h = int(obj[4]) - int(obj[2])
+    if h > w:
+        diff = h-w
+        print("Difference: " + str(diff))
+        obj[3] = int(obj[3]) + diff/2
+        print(obj[1])
+        obj[1] = int(obj[1]) - diff/2
+        print(obj[1])
+    if h < w:
+        diff = w-h
+        print("Difference: " + str(diff))
+        obj[4] = int(obj[4]) + diff/2
+        print(obj[2])
+        obj[2] = int(obj[2]) - diff/2
+        print(obj[2])
     #Die bounding box des Trainingsdatums wird ausgeschnitten
     img = img[int(obj[2]):int(obj[4]), int(obj[1]):int(obj[3])]
     #Das Bild wird auf 244x244 Pixel skaliert
@@ -104,7 +120,7 @@ def writeTFRecords(xs, ys):
         print("data/images/{}".format(line))
         img = cv2.imread("data/images/{}".format(line))
         height, width, _ = img.shape
-        for i in range(30):
+        for i in range(50):
             w = randint(0,width-224)
             h = randint(0,height-224)
             crop_img = img[h:h+224, w:w+224]
