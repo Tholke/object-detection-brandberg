@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 import os
 import watershed
-from intersectionOverUnion import intersectionOverUnion
+from helpers import intersection
 
 #Unterdrückt eine Warnmeldung bei MacOS
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -158,7 +158,7 @@ def main(unused_argv):
     while i < arraylen:
         j = i+1
         while j < arraylen:
-            if intersectionOverUnion(scaledBoundingBoxes[i], scaledBoundingBoxes[j]):
+            if intersection(scaledBoundingBoxes[i], scaledBoundingBoxes[j]):
                 probsImgA = predictionsForSegmentation[i]
                 probsImgB = predictionsForSegmentation[j]
       
