@@ -164,7 +164,8 @@ def main(unused_argv):
                 #Die Wahrscheinlichkeit, mit der das neuronale Netz ein Tier oder Mensch erkannt hat
                 probsImgA = predictionsForSegmentation[i]
                 probsImgB = predictionsForSegmentation[j]
-      
+                
+                #Entfernt das Bild mit der geringeren Wahrscheinlichkeit aus allen Listen
                 if probsImgB <= probsImgA:
                     imagesForSegmentation.pop(j)
                     scaledBoundingBoxes.pop(j)
