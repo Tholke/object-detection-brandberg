@@ -155,10 +155,13 @@ def main(unused_argv):
     i = 0
     arraylen = len(scaledBoundingBoxes)
     
+    #Durchläuft alle identifizierten Menschen und Tiere und filtert identische Objekte heraus
+    #Sind zwei identische Objekte gefunden, wird das mit der niedrigeren Wahrscheinlichkeit gelöscht
     while i < arraylen:
         j = i+1
         while j < arraylen:
             if intersection(scaledBoundingBoxes[i], scaledBoundingBoxes[j]):
+                #Die Wahrscheinlichkeit, mit der das neuronale Netz ein Tier oder Mensch erkannt hat
                 probsImgA = predictionsForSegmentation[i]
                 probsImgB = predictionsForSegmentation[j]
       
