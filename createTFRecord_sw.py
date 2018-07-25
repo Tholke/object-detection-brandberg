@@ -113,28 +113,35 @@ def writeTFRecords(xs, ys):
     
     tn_no = 0
     for line in content:
-        print("data/images/{}".format(line))
+        print("Erstelle True-Negatives aus: data/images/{}".format(line))
+        #Bild wird gelesen
         img = cv2.imread("data/images/{}".format(line))
         height, width, _ = img.shape
-        for i in range(50):
-            w = randint(0,width-224)
-            h = randint(0,height-224)
-            crop_img = img[h:h+224, w:w+224]
-            #Das Bild wird auf 244x244 Pixel skaliert
-            crop_img = cv2.resize(crop_img, (224, 224), interpolation=cv2.INTER_CUBIC)
-            #Die Farbwerte werden konvertiert
-            crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
-            #Das Bild wird in Integer zerlegt
-            crop_img = crop_img.astype(np.uint8)
-            label = 2
-            feature = {'train/label': _int64_feature(label),
-                   'train/image': _bytes_feature(tf.compat.as_bytes(crop_img.tostring()))}  
-            #Ein TFExample wird aus dem Feature erstellt
-            example = tf.train.Example(features=tf.train.Features(feature=feature))
-            #Das TFExample wird in die TFRecordsdatei geschrieben
-            writer.write(example.SerializeToString())
-            print("Adding true negative no. " + (str(tn_no)))
-            tn_no = tn_no + 1
+               
+        x = []
+        pName = line
+        #30 zufällige Regionen (224x224 Pixel) werden aus dem Bild ausgeschnitten
+        for i in range(30): 
+            xmin = randint(0,width-224)
+            ymin = randint(0,height-224)
+            xmax = xmin + 224
+            ymax = ymin + 224
+            
+            #Label wird in die Labelliste gespeichert
+            ys.append('negative')
+            
+            #Für jedes Ture Negative wird der Name der Seite und die 4 Ecken der bounding box abgespeichert
+            #Die bounding box wird in der Reihenfolge xmin, ymin, xmax, ymax abgespeichert
+            x.append(pName)
+            x.append(xmin)
+            x.append(ymin)
+            x.append(xmax)
+            x.append(ymax)
+            
+            #Jedes Trainingsdatum wird in eine Liste aller Trainingsdaten gespeichert
+            xs.append(x)     
+            
+    tn_no = tn_no + 1 
             
     #Der Output wird geschlossen und das System 
     writer.close()
