@@ -22,22 +22,18 @@ def loadImage(path, obj):
     #Eine gesamte Buchseite wird gelesen
     img = cv2.imread(path)
     print(path)
+    #Prüft, ob die Bildausschnitte genauso lang wie hoch sind
+    #Sind ist eine Seite länger, wird das Bild oben und unten bzw. links und rechts so weit ergänzt, bis beide Seiten gleich lang sind
     w = int(obj[3]) - int(obj[1])
     h = int(obj[4]) - int(obj[2])
     if h > w:
         diff = h-w
-        print("Difference: " + str(diff))
         obj[3] = int(obj[3]) + diff/2
-        print(obj[1])
         obj[1] = int(obj[1]) - diff/2
-        print(obj[1])
     if h < w:
         diff = w-h
-        print("Difference: " + str(diff))
         obj[4] = int(obj[4]) + diff/2
-        print(obj[2])
         obj[2] = int(obj[2]) - diff/2
-        print(obj[2])
     #Die bounding box des Trainingsdatums wird ausgeschnitten
     img = img[int(obj[2]):int(obj[4]), int(obj[1]):int(obj[3])]
     #Das Bild wird auf 244x244 Pixel skaliert
@@ -130,9 +126,6 @@ def writeTFRecords(xs, ys):
             crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
             #Das Bild wird in Integer zerlegt
             crop_img = crop_img.astype(np.uint8)
-#             cv2.imshow('Window', crop_img)
-#             cv2.waitKey(1)
-#             time.sleep(0.025)
             label = 2
             feature = {'train/label': _int64_feature(label),
                    'train/image': _bytes_feature(tf.compat.as_bytes(crop_img.tostring()))}  
