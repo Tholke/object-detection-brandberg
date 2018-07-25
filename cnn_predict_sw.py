@@ -7,35 +7,47 @@ import time
 import cv2
 import os
 
+#Unterdrückt eine Warnmeldung bei MacOS
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-
-
+#Das ganze Model muss neu angegeben werden. Auch wenn es schon vorher trainiert wurde
 def cnn_model(features, labels, mode):
+    #Bilder werden (erneut) auf 224x224 Pixel angepasst
     input_layer = tf.reshape(features["x"], [-1, 224, 224, 3])
+    
+    #Erster convolutional Layer
     conv1 = tf.layers.conv2d(inputs=input_layer, filters=32, kernel_size=[5,5], padding="same", activation=tf.nn.relu)
     pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2,2], strides=2)
+    
+    #Zweiter convolutional Layer
     conv2 = tf.layers.conv2d(inputs=pool1, filters=64, kernel_size=[5, 5], padding="same", activation=tf.nn.relu)
     pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2,2], strides=2)    
+    #Output des zweiten convolutional Layers wird für den Denselayer geglättet
     pool2_flat = tf.reshape(pool2, [-1, 56 * 56 * 64])
     
+    #Erster vollständig verbundener Layer mit Dropout, um Overfitting entgegenzuwirken
     dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
     dropout = tf.layers.dropout(inputs=dense, rate=0.4, training = mode == tf.estimator.ModeKeys.TRAIN)
     
+    #Outputlayer
     logits = tf.layers.dense(inputs = dropout, units = 3)
     
     if labels is not None:
+        #Labels werden Onehot kodiert
         onehot_labels = tf.one_hot(indices = labels, depth = 3)
     
+        #Loss wird berechnet
         loss = tf.losses.softmax_cross_entropy(onehot_labels=onehot_labels, logits=logits)
     
+    #Predictions besitzen eine Klasse und eine Wahrscheinlichkeit
     predictions = {
-      # Generate predictions (for PREDICT and EVAL mode)
+      #Der höchste Output wird als Klasse gewählt
       "classes": tf.argmax(input=logits, axis=1),
-      # Add `softmax_tensor` to the graph. It is used for PREDICT and by the
-      # `logging_hook`.
+      #Wahrscheinlichkeit wird durch Softmax angegeben
       "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
     }
+    
+    #Im Prediction-Modus werden Predictions ausgegeben
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions, export_outputs={
             'classify': tf.estimator.export.PredictOutput(predictions)})
@@ -49,12 +61,15 @@ def main(unused_argv):
         init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
 
     
-        # load the image and define the window width and height
+        #Ein Bild (eine Buchseite) wird eingelesen und die Fenstergrößé des sliding window definiert
         image = cv2.imread('data/images/BOOK-0824731-0059.jpg')
         (winW, winH) = (224, 224)
         
+        #Liste mit einigen Kerninformationen
         imageList = []
+        #List ein der später die Koordinaten des gefundenen Bildes gespeichert werden (zum entfernen von Duplikaten)
         debug_list = []
+        #Liste der Wahrscheinlichkeit, die das neuronale Netz angegeben hat
         predictionsForSegmentation = []
         
         index = 0
@@ -121,7 +136,8 @@ def main(unused_argv):
                 #Die Wahrscheinlichkeit, mit der das neuronale Netz ein Tier oder Mensch erkannt hat
                 probsImgA = predictionsForSegmentation[i]
                 probsImgB = predictionsForSegmentation[j]
-      
+                
+                #Entfernt das Bild mit der geringeren Wahrscheinlichkeit aus allen Listen
                 if probsImgB <= probsImgA:
                     imagesForSegmentation.pop(j)
                     debug_list.pop(j)
