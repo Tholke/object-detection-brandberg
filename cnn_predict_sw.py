@@ -3,6 +3,7 @@ import numpy as np
 from helpers import pyramid
 from helpers import sliding_window
 from helpers import intersection
+import watershed
 import time
 import cv2
 import os
@@ -125,7 +126,6 @@ def main(unused_argv):
         
     i = 0
     arraylen = len(debug_list)
-    print('Vorher:', arrayLen)
     
     #Durchläuft alle identifizierten Menschen und Tiere und filtert identische Objekte heraus
     #Sind zwei identische Objekte gefunden, wird das mit der niedrigeren Wahrscheinlichkeit gelöscht
@@ -155,7 +155,6 @@ def main(unused_argv):
         i += 1
             
     
-    print('Nachher:', arrayLen)
     
     #Pfad unter dem die Segmentierten bilder abgespeichert werden können
     savePath = 'output/'
