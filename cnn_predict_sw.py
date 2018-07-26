@@ -160,7 +160,7 @@ def main(unused_argv):
     savePath = 'output/'
     
     #Restliche Regionen aus dem zu segmentierenden Array werden durch den Watershed-Algorithmus segmentiert
-    for l in imagesList:
+    for l in imageList:
         saveImagePath = savePath + imagePath[:-4] + '-' + str(i) + '.jpg'
         watershed.computeWatershed(l[3], saveImagePath)
 
