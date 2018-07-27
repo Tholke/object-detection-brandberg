@@ -10,6 +10,12 @@ Thomas Oehlke: toehlke@smail.uni-koeln.de<br>
 
 Auf die erzeugten Bilder könnten weitere Forschungen aufgebaut werden, da die segmentierten Bilder unnütze Informationen, wie Farbflecken, herausgefiltert haben und weitere machine learning Algorithmen somit effizienter arbeiten können.
 
+Benötigte Technologien:
+  - Python 3.6.4
+  - TensorFlow 1.9.0
+  - OpenCV 3.4.1
+  - NumPy 1.14.3
+
 Es gibt zwei verschiedene Ansätze aus denen gewählt werden kann:
 1) Selective Search:
   - Mit der Datei createTFRecord.py wird die TFRecord-Datei erstellt
