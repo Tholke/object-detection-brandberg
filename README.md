@@ -1,4 +1,4 @@
-﻿# Objekterkennung in der Datenbank vom oberen Omukuruvaro.
+﻿# Objektsegmentierung von Wandmalereien des oberen Brandbergs durch TensorFlow und OpenCV 
 Objektsegmentierung von Wandmalereien des oberen Brandbergs durch TensorFlow und OpenCV
 
 <h3>Mitglieder:</h3>
