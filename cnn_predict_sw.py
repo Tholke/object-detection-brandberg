@@ -139,7 +139,7 @@ def main(unused_argv):
                 
                 #Entfernt das Bild mit der geringeren Wahrscheinlichkeit aus allen Listen
                 if probsImgB <= probsImgA:
-                    imagesForSegmentation.pop(j)
+                    imageList.pop(j)
                     debug_list.pop(j)
                     predictionsForSegmentation.pop(j)
                     j -= 1
