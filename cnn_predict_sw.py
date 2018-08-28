@@ -1,12 +1,13 @@
+#Dieses Skript kann genutzt werden, um dem CNN ein Bild zum verarbeiten zu geben und die interessanten Regionen zu segmentieren
+
 import tensorflow as tf
 import numpy as np
-from helpers import pyramid
-from helpers import sliding_window
-from helpers import intersection
-import watershed
-import time
 import cv2
 import os
+import watershed
+from helpers import intersection
+from helpers import pyramid
+from helpers import sliding_window
 
 #Unterdrückt eine Warnmeldung bei MacOS
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -52,121 +53,117 @@ def cnn_model(features, labels, mode):
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions, export_outputs={
             'classify': tf.estimator.export.PredictOutput(predictions)})
-
-        
+    
 def main(unused_argv):
-    saver = tf.train.import_meta_graph('output/brandberg_cnn/model.ckpt-3250.meta')
+    #Das trainierte Model wird geladen
+    saver = tf.train.import_meta_graph('tmp/brandberg_cnn/model.ckpt-3021.meta')
 
     with tf.Session() as sess:
-        saver.restore(sess, tf.train.latest_checkpoint('output/brandberg_cnn/'))
+        #Der letzte Checkpoint des Models wird geladen und globale und lokale TensorFlowVariablen initialisiert
+        saver.restore(sess, tf.train.latest_checkpoint('tmp/brandberg_cnn/'))
         init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
-
+        sess.run(init_op)
+        
+    #Ein Bild (eine Buchseite) wird eingelesen
+    dirPath = 'data/images/'
+    imagePath = 'BOOK-0824731-0119.jpg'
+    image = cv2.imread(dirPath + imagePath)
     
-        #Ein Bild (eine Buchseite) wird eingelesen und die Fenstergrößé des sliding window definiert
-        image = cv2.imread('data/images/BOOK-0824731-0059.jpg')
-        (winW, winH) = (224, 224)
+    #Bild kann zur Erhöhung der Rechengeschwindigkeit und zur Reduktion von nötigem Arbeitsspeicher um die Hälfte (oder mehr) verkleinert werden, rediuziert jedoch die Genauigkeit
+        #image = cv2.resize(image, (int(image.shape[0]/2), int(image.shape[1]/2)), interpolation=cv2.INTER_CUBIC)
+    
+    (winW, winH) = (224, 224)
+    imagesToClassify = []
+    imagesForSegmentation = []
+    scaledBoundingBoxes = []
+
+    index = 0
+    # Loopt über die Bilder verschiedener Größe
+    for resized in pyramid(image, scale=1.5):
         
-        #Liste mit einigen Kerninformationen
-        imageList = []
-        #List ein der später die Koordinaten des gefundenen Bildes gespeichert werden (zum entfernen von Duplikaten)
-        debug_list = []
-        #Liste der Wahrscheinlichkeit, die das neuronale Netz angegeben hat
-        predictionsForSegmentation = []
-        
-        index = 0
-        # Loopt über die Bilder verschiedener Größe
-        for resized in pyramid(image, scale=1.5):
-            # Loopt über das Bild indem der momentan betrachtete Auschnitt immer wieder verschoben wird
-            for (x, y, window) in sliding_window(resized, stepSize=30, windowSize=(winW, winH)):
-                # Hat das Fenster nicht die richtige Größe wird es ignoriert
-                if window.shape[0] != winH or window.shape[1] != winW:
-                    continue
-                
-                index = index + 1
-                
-                # Macht eine Kopie des Bildes
-                clone = resized.copy()
-                
-                # Schneidet den richtigen Auschnitt aus und bereitet es für die Eingabe in Tensorflow vor
-                cropped = clone[y :y + winW , x : x + winW]
-                cropped = cropped.astype(np.float64)
-                images = []
-                images.append(cropped)
-                images = np.asarray(images)
-                
-                #Das neuronale Netzwerk wird geladen
-                classifier = tf.estimator.Estimator(
-                    model_fn=cnn_model, model_dir="output/brandberg_cnn/")
-               
-                #Regionen werden dem Netzwerk übergeben und es gibt Predictions aus
-                input_fn = tf.estimator.inputs.numpy_input_fn(
-                    x={"x": images},
-                    num_epochs=1,
-                    shuffle=False)
-            
-                predictions = classifier.predict(input_fn = input_fn)
-                #Predictions werden in eine Liste gespeichert
-                list_pred = list(predictions)
-        
-                for img in reversed(list_pred):
-                    probs = img.get('probabilities')
-                
-                #Regionen, bei denen sich das Netzwerk zu 95% sicher ist, werden in ein Array gespeichert.
-                #D.h. alle Regionen, bei denen das Netzwerk ein Mensch oder ein Tier erkannt hat 
-                ind = len(list_pred)-1
-                for img in reversed(list_pred):
-                    probs = img.get('probabilities')
-                    if probs[0] > 0.95 or probs[1] > 0.95:
-                        imageList.append([probs[0], probs[1], probs[2], cropped, x, y, winW, winH])
-                        predictionsForSegmentation.append(max(probs[0], probs[1]))
-                        debug_list.append([x, y, x+winW, y+winH])
-#                         print(imageList[-1])
-#                         print('Länge:', len(imageList))
-                    ind -= 1
-        
+        # Loopt über das Bild indem der momentan betrachtete Auschnitt immer wieder verschoben wird
+        for (x, y, window) in sliding_window(resized, stepSize=30, windowSize=(winW, winH)):
+            # Hat das Fenster nicht die richtige Größe wird es ignoriert
+            if window.shape[0] != winH or window.shape[1] != winW:
+                continue
+            scaledBoundingBoxes.append([x, y, x + winW, y + winH])
+            imagesForSegmentation.append(window)
+            #Region wird für das neuronale Netzwerk vorbereitet und in einen anderen Array gespeichert
+            window = cv2.resize(window, (224, 224), interpolation=cv2.INTER_CUBIC)
+            window = cv2.cvtColor(window, cv2.COLOR_BGR2RGB)
+            window = window.astype(np.float32)
+            imagesToClassify.append(window)
+
+    #Prediction-Array wird für das neuronale Netzwerk zum NumPy-Array umgewandelt
+    imagesToClassify = np.asarray(imagesToClassify)
+
+    #Das neuronale Netzwerk wird geladen
+    classifier = tf.estimator.Estimator(
+        model_fn=cnn_model, model_dir="tmp/brandberg_cnn")
+
+    #Regionen werden dem Netzwerk übergeben und es gibt Predictions aus
+    input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": imagesToClassify},
+        num_epochs=1,
+        shuffle=False)
+    
+    predictions = classifier.predict(input_fn = input_fn)
+    #Predictions werden in eine Liste gespeichert
+    list_pred = list(predictions)
+    print(list_pred)
+    
+    #Regionen, bei denen sich das Netzwerk nicht zu 99% sicher ist, werden aus dem Array für die Segmentation gelöscht
+    #D.h. alle Regionen, bei denen das Netzwerk kein Mensch oder Tier erkannt hat 
+    ind = len(list_pred)-1
+    deletedImages = 0
+    predictionsForSegmentation = []
+    for img in reversed(list_pred):
+        probs = img.get('probabilities')
+        if probs[0] < 0.99 and probs[1] < 0.99  :
+            imagesForSegmentation.pop(ind)
+            scaledBoundingBoxes.pop(ind)
+            deletedImages += 1
+        else:
+            predictionsForSegmentation.append(max(probs[0], probs[1]))
+        ind -= 1
+    
     i = 0
-    arraylen = len(debug_list)
+    arraylen = len(scaledBoundingBoxes)
     
     #Durchläuft alle identifizierten Menschen und Tiere und filtert identische Objekte heraus
     #Sind zwei identische Objekte gefunden, wird das mit der niedrigeren Wahrscheinlichkeit gelöscht
     while i < arraylen:
         j = i+1
         while j < arraylen:
-            if intersection(debug_list[i], debug_list[j]):
+            if intersection(scaledBoundingBoxes[i], scaledBoundingBoxes[j]):
                 #Die Wahrscheinlichkeit, mit der das neuronale Netz ein Tier oder Mensch erkannt hat
                 probsImgA = predictionsForSegmentation[i]
                 probsImgB = predictionsForSegmentation[j]
                 
                 #Entfernt das Bild mit der geringeren Wahrscheinlichkeit aus allen Listen
                 if probsImgB <= probsImgA:
-                    imageList.pop(j)
-                    debug_list.pop(j)
-                    predictionsForSegmentation.pop(j)
+                    imagesForSegmentation.pop(j)
+                    scaledBoundingBoxes.pop(j)
                     j -= 1
                     arraylen -= 1
                 else:
-                    imageList.pop(i)
-                    debug_list.pop(i)
-                    predictionsForSegmentation.pop(i)
+                    imagesForSegmentation.pop(i)
+                    scaledBoundingBoxes.pop(i)
                     i -= 1
                     arraylen -= 1
                     break
             j += 1
         i += 1
             
-    
+    print(len(imagesForSegmentation), 'Bilder werden segmentiert.')
     
     #Pfad unter dem die Segmentierten bilder abgespeichert werden können
     savePath = 'output/'
     
     #Restliche Regionen aus dem zu segmentierenden Array werden durch den Watershed-Algorithmus segmentiert
-    for l in imageList:
+    for i, image in enumerate(imagesForSegmentation):
         saveImagePath = savePath + imagePath[:-4] + '-' + str(i) + '.jpg'
-        watershed.computeWatershed(l[3], saveImagePath)
-
-                
-                
-    print(imageList)        
+        watershed.computeWatershed(image, saveImagePath)
 
 if __name__ == "__main__":
     tf.app.run()
