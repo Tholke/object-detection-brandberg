@@ -22,9 +22,13 @@ Es gibt zwei verschiedene Ansätze aus denen gewählt werden kann:
   - Mit der Datei cnn.py wird das neuronale Netz Trainiert
   - Mit der Datei cnn_predict.py wird eine Buchseite bearbeitet, die Objekte erkannt und isoliert
     (Eventuell muss die Zeile "saver = tf.train.import_meta_graph(xxx)" angepasst werden.)
+  - Sobald die segmentierten Bilder angezeigt werden kann das Bild manuell durch Betätigung der Taste "s"
+    gespeichert werden. Ein Druck auf eine andere Taste überspringt das Bild.
     
 2) Sliding Window:
   - Mit der Datei createTFRecord_sw.py wird die TFRecord-Datei erstellt
   - Mit der Datei cnn_sw.py wird das neuronale Netz Trainiert
   - Mit der Datei cnn_predict_sw.py wird eine Buchseite bearbeitet, die Objekte erkannt und isoliert
     (Eventuell muss die Zeile "saver = tf.train.import_meta_graph(xxx)" angepasst werden.)
+  - Sobald die segmentierten Bilder angezeigt werden kann das Bild manuell durch Betätigung der Taste "s"
+    gespeichert werden. Ein Druck auf eine andere Taste überspringt das Bild.
