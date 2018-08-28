@@ -11,8 +11,8 @@ def read_decode(filename_queue):
     reader = tf.TFRecordReader()
     #Eine Bild-Label-Kombination wird gelesen
     _, serialized_example = reader.read(filename_queue)
-    feature = {'train/label': tf.FixedLenFeature([], tf.int64),
-               'train/image': tf.FixedLenFeature([], tf.string)}
+    feature = {'label': tf.FixedLenFeature([], tf.int64),
+               'image': tf.FixedLenFeature([], tf.string)}
     
     #Bild-Label-Kombination wird geparsed, das Bild in 32Bit Floats umgewandelt und die Labels in Integer
     features = tf.parse_single_example(serialized_example, features = feature)
@@ -20,7 +20,7 @@ def read_decode(filename_queue):
     image = tf.cast(image, tf.float64)
     label = tf.cast(features['label'], tf.int32)
   
-return image, label
+    return image, label
 
 #Parset die gesamte TFRecords Datei und gibt Features und Labels aus 
 def read_tfrecords(path):
@@ -57,7 +57,7 @@ def read_tfrecords(path):
             coord.request_stop()
             coord.join(threads)
         
-return features, labels
+        return features, labels
 
 def cnn_model(features, labels, mode):
     #Bilder werden (erneut) auf 224x224 Pixel angepasst
@@ -156,9 +156,9 @@ def main(unused_argv):
       y=eval_labels,
       num_epochs=1,
       shuffle=False)
-    
+     
     eval_results = classifier.evaluate(input_fn=eval_input_fn)
-print(eval_results)
-    
+    print(eval_results)
+     
 if __name__ == "__main__":
     tf.app.run()
