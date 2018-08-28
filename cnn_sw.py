@@ -17,7 +17,7 @@ def read_decode(filename_queue):
     #Bild-Label-Kombination wird geparsed, das Bild in 32Bit Floats umgewandelt und die Labels in Integer
     features = tf.parse_single_example(serialized_example, features = feature)
     image = tf.decode_raw(features['image'], tf.uint8)
-    image = tf.cast(image, tf.float64)
+    image = tf.cast(image, tf.float32)
     label = tf.cast(features['label'], tf.int32)
   
     return image, label
